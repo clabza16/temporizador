@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temporizador Demo Day | Achs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-dark">
+    <div id="app" class="app-container">
+        <!-- Header con Logo y Estado -->
+        <header class="main-header">
+            <div class="logo-container">
+                <span class="logo-text">ACHS <span class="sub-text">DEMO DAY</span></span>
+            </div>
+            <div id="connection-status" class="status-badge disconnected">
+                Desconectado
+            </div>
+        </header>
+
+        <!-- Área Principal del Temporizador -->
+        <main class="timer-display-area">
+            <div id="timer-container" class="timer-container">
+                <div id="timer-value" class="timer-value">00:00:00</div>
+                <div id="timer-label" class="timer-label">TIEMPO RESTANTE</div>
+            </div>
+        </main>
+
+        <!-- Panel de Control (Solo visible para Admin) -->
+        <section id="admin-panel" class="admin-panel hidden">
+            <div class="control-group">
+                <button id="btn-start" class="btn btn-primary" title="Iniciar/Reanudar">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    <span>INICIAR</span>
+                </button>
+                <button id="btn-pause" class="btn btn-secondary" title="Pausar">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    <span>PAUSAR</span>
+                </button>
+                <button id="btn-reset" class="btn btn-outline" title="Resetear">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                    <span>RESETEAR</span>
+                </button>
+            </div>
+            
+            <div class="settings-group">
+                <div class="input-container">
+                    <label for="input-minutes">Minutos:</label>
+                    <input type="number" id="input-minutes" value="5" min="1" max="60">
+                </div>
+                <div class="toggle-container">
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-wake-lock">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Mantener pantalla encendida</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Selector de Rol (Inicial) -->
+        <div id="role-selector" class="modal-overlay">
+            <div class="modal-content">
+                <h2>Bienvenido a Demo Day Achs</h2>
+                <p>Selecciona tu modo de visualización:</p>
+                <div class="role-buttons">
+                    <button onclick="app.setRole('admin')" class="btn btn-primary">ADMINISTRADOR</button>
+                    <button onclick="app.setRole('spectator')" class="btn btn-secondary">ESPECTADOR</button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="main-footer">
+            <p>&copy; 2026 Asociación Chilena de Seguridad</p>
+        </footer>
+    </div>
+
+    <!-- SDKs de Sincronización (Firebase por defecto) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+.gemini/
+requerimiento.md
+requerimiento_mejorado.md
+implementation_plan.md
+task.md
+walkthrough.md
+node_modules/
+.DS_Store
