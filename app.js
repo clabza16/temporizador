@@ -61,44 +61,61 @@ const app = {
     },
 
     initSync() {
-        // Incluimos Gun.js dinámicamente si no está (aunque se recomienda en el HTML)
-        if (typeof Gun === 'undefined') {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/gun/gun.js';
-            script.onload = () => this.setupGun();
-            document.head.appendChild(script);
-        } else {
-            this.setupGun();
-        }
-    },
+        // Usaremos un broker MQTT público vía WebSockets para sincronizar múltiples computadoras en tiempo real
+        this.client = mqtt.connect('wss://test.mosquitto.org:8081');
+        this.topicState = 'achs-demo-day/timer/state';
+        this.topicRequest = 'achs-demo-day/timer/request';
 
-    setupGun() {
-        // Usamos un relay público de Gun.js
-        this.db = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-        // Sala única para la Demo Day de hoy
-        const today = new Date().toISOString().split('T')[0];
-        this.room = this.db.get('achs-demo-day-timer-' + today);
+        this.client.on('connect', () => {
+            console.log("Conectado al servidor de sincronización global");
+            this.dom.connectionStatus.innerText = "Sincronizado (Global)";
+            this.dom.connectionStatus.classList.remove('disconnected');
+            this.dom.connectionStatus.classList.add('connected');
+            
+            this.client.subscribe(this.topicState);
+            this.client.subscribe(this.topicRequest);
+        });
 
-        this.dom.connectionStatus.innerText = "Sincronizado";
-        this.dom.connectionStatus.classList.remove('disconnected');
-        this.dom.connectionStatus.classList.add('connected');
-
-        // Escuchar cambios de otros clientes
-        this.room.on((data) => {
-            if (this.role === 'spectator' || (!this.role && data)) {
-                console.log("Sincronización recibida:", data);
-                this.state.isRunning = data.isRunning;
-                this.state.timeRemaining = data.timeRemaining;
-                this.state.lastUpdated = data.lastUpdated;
+        this.client.on('message', (topic, message) => {
+            try {
+                const payload = JSON.parse(message.toString());
                 
-                if (this.state.isRunning) {
-                    this.resumeTimerLogic();
-                } else {
-                    this.stopTimerLogic();
+                if (topic === this.topicState) {
+                    if (this.role === 'spectator' || !this.role) {
+                        this.state.isRunning = payload.isRunning;
+                        this.state.timeRemaining = payload.timeRemaining;
+                        this.state.lastUpdated = payload.lastUpdated;
+                        
+                        if (this.state.isRunning) {
+                            this.resumeTimerLogic();
+                        } else {
+                            this.stopTimerLogic();
+                        }
+                        this.updateDisplay();
+                    }
+                } else if (topic === this.topicRequest) {
+                    if (this.role === 'admin') {
+                        // Un nuevo espectador solicitó el estado, se lo enviamos
+                        this.syncState();
+                    }
                 }
-                this.updateDisplay();
+            } catch (e) {
+                console.error("Error al procesar el mensaje MQTT", e);
             }
         });
+
+        // Fallback local visual
+        const savedState = localStorage.getItem('achsTimerState');
+        if (savedState) {
+            try {
+                const parsed = JSON.parse(savedState);
+                this.state.isRunning = parsed.isRunning;
+                this.state.timeRemaining = parsed.timeRemaining;
+                this.state.lastUpdated = parsed.lastUpdated;
+                if (this.state.isRunning) this.resumeTimerLogic();
+                this.updateDisplay();
+            } catch(e) {}
+        }
     },
 
     setRole(role) {
@@ -107,6 +124,11 @@ const app = {
         
         if (role === 'admin') {
             this.dom.adminPanel.classList.remove('hidden');
+            this.syncState();
+        } else if (role === 'spectator') {
+            if (this.client && this.client.connected) {
+                this.client.publish(this.topicRequest, JSON.stringify({ action: 'REQUEST_STATE' }));
+            }
         }
         
         // Solicitar wake lock si el checkbox está activo por defecto (opcional)
@@ -174,12 +196,19 @@ const app = {
     },
 
     syncState() {
-        if (this.role !== 'admin' || !this.room) return;
-        this.room.put({
+        if (this.role !== 'admin' || !this.client) return;
+        
+        const stateData = {
             timeRemaining: this.state.timeRemaining,
             isRunning: this.state.isRunning,
             lastUpdated: Date.now()
-        });
+        };
+
+        // Guardamos en localStorage para cuando se abra una nueva ventana
+        localStorage.setItem('achsTimerState', JSON.stringify(stateData));
+
+        // Transmitimos globalmente al broker MQTT para múltiples computadoras
+        this.client.publish(this.topicState, JSON.stringify(stateData));
     },
 
     updateDisplay() {
