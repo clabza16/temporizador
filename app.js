@@ -61,8 +61,8 @@ const app = {
     },
 
     initSync() {
-        // Usaremos un broker MQTT público vía WebSockets para sincronizar múltiples computadoras en tiempo real
-        this.client = mqtt.connect('wss://test.mosquitto.org:8081');
+        // Usaremos un broker MQTT público (EMQX) altamente confiable vía WebSockets
+        this.client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         this.topicState = 'achs-demo-day/timer/state';
         this.topicRequest = 'achs-demo-day/timer/request';
 
