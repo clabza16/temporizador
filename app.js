@@ -84,7 +84,10 @@ const app = {
                     if (this.role === 'spectator' || !this.role) {
                         this.state.isRunning = payload.isRunning;
                         this.state.timeRemaining = payload.timeRemaining;
-                        this.state.lastUpdated = payload.lastUpdated;
+                        
+                        // FIX: No usar el lastUpdated del servidor/admin porque los relojes de las computadoras 
+                        // pueden tener segundos de diferencia. Sincronizamos con el momento en que llega el mensaje.
+                        this.state.lastUpdated = Date.now();
                         
                         if (this.state.isRunning) {
                             this.resumeTimerLogic();
