@@ -58,6 +58,15 @@ const app = {
                 this.resetTimer();
             }
         });
+
+        // Re-solicitar Wake Lock si la pantalla recupera la visibilidad
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                if (this.role === 'spectator' || (this.role === 'admin' && this.dom.toggleWakeLock.checked)) {
+                    this.handleWakeLock(true);
+                }
+            }
+        });
     },
 
     initSync() {
@@ -128,14 +137,15 @@ const app = {
         if (role === 'admin') {
             this.dom.adminPanel.classList.remove('hidden');
             this.syncState();
+            // Solicitar wake lock si el checkbox está activo para el admin
+            if (this.dom.toggleWakeLock.checked) {
+                this.handleWakeLock(true);
+            }
         } else if (role === 'spectator') {
             if (this.client && this.client.connected) {
                 this.client.publish(this.topicRequest, JSON.stringify({ action: 'REQUEST_STATE' }));
             }
-        }
-        
-        // Solicitar wake lock si el checkbox está activo por defecto (opcional)
-        if (this.dom.toggleWakeLock.checked) {
+            // Forzar wake lock permanentemente para espectadores y así evitar suspensión de pantallas
             this.handleWakeLock(true);
         }
     },
